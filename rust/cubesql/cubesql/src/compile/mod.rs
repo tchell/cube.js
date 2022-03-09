@@ -2155,6 +2155,7 @@ mod tests {
     use async_trait::async_trait;
     use cubeclient::models::{
         V1CubeMeta, V1CubeMetaDimension, V1CubeMetaMeasure, V1CubeMetaSegment, V1LoadResponse,
+        V1LoadResult,
     };
 
     use crate::{
@@ -2844,7 +2845,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_select_aggregations() {
         let variants = vec![
             (
@@ -2859,15 +2859,6 @@ mod tests {
                     offset: None,
                     filters: None,
                 },
-                Arc::new(
-                    DFSchema::new(vec![DFField::new(
-                        None,
-                        "COUNT(UInt8(1))",
-                        DataType::Int64,
-                        true,
-                    )])
-                    .unwrap(),
-                ),
             ),
             (
                 "SELECT COUNT(1) FROM KibanaSampleDataEcommerce".to_string(),
@@ -2881,15 +2872,6 @@ mod tests {
                     offset: None,
                     filters: None,
                 },
-                Arc::new(
-                    DFSchema::new(vec![DFField::new(
-                        None,
-                        "COUNT(UInt8(1))",
-                        DataType::Int64,
-                        true,
-                    )])
-                    .unwrap(),
-                ),
             ),
             (
                 "SELECT COUNT(count) FROM KibanaSampleDataEcommerce".to_string(),
@@ -2903,15 +2885,6 @@ mod tests {
                     offset: None,
                     filters: None,
                 },
-                Arc::new(
-                    DFSchema::new(vec![DFField::new(
-                        None,
-                        "COUNT(KibanaSampleDataEcommerce.count)",
-                        DataType::Int64,
-                        true,
-                    )])
-                    .unwrap(),
-                ),
             ),
             (
                 "SELECT COUNT(DISTINCT agentCount) FROM Logs".to_string(),
@@ -2925,15 +2898,6 @@ mod tests {
                     offset: None,
                     filters: None,
                 },
-                Arc::new(
-                    DFSchema::new(vec![DFField::new(
-                        None,
-                        "COUNT(DISTINCT Logs.agentCount)",
-                        DataType::Int64,
-                        true,
-                    )])
-                    .unwrap(),
-                ),
             ),
             (
                 "SELECT COUNT(DISTINCT agentCountApprox) FROM Logs".to_string(),
@@ -2947,15 +2911,6 @@ mod tests {
                     offset: None,
                     filters: None,
                 },
-                Arc::new(
-                    DFSchema::new(vec![DFField::new(
-                        None,
-                        "COUNT(DISTINCT Logs.agentCountApprox)",
-                        DataType::Int64,
-                        true,
-                    )])
-                    .unwrap(),
-                ),
             ),
             (
                 "SELECT MAX(`maxPrice`) FROM KibanaSampleDataEcommerce".to_string(),
@@ -2969,23 +2924,13 @@ mod tests {
                     offset: None,
                     filters: None,
                 },
-                Arc::new(
-                    DFSchema::new(vec![DFField::new(
-                        None,
-                        "MAX(KibanaSampleDataEcommerce.maxPrice)",
-                        DataType::Int64,
-                        true,
-                    )])
-                    .unwrap(),
-                ),
             ),
         ];
 
-        for (input_query, expected_request, expected_scan_schema) in variants.iter() {
+        for (input_query, expected_request) in variants.iter() {
             let logical_plan = convert_select_to_query_plan(input_query.clone()).as_logical_plan();
 
             assert_eq!(&logical_plan.find_cube_scan().request, expected_request);
-            assert_eq!(&logical_plan.find_cube_scan().schema, expected_scan_schema);
         }
     }
 
