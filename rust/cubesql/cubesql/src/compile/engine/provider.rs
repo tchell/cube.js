@@ -16,9 +16,10 @@ use super::information_schema::{
     schemata::InfoSchemaSchemataProvider, statistics::InfoSchemaStatisticsProvider,
     tables::InfoSchemaTableProvider, variables::PerfSchemaVariablesProvider,
 };
-use crate::transport::{MetaContext, V1CubeMetaExt};
+use crate::transport::V1CubeMetaExt;
 use crate::CubeError;
 use async_trait::async_trait;
+use cubeclient::models::V1CubeMeta;
 use datafusion::arrow::datatypes::{DataType, Field, Schema, SchemaRef, TimeUnit};
 use datafusion::datasource::TableProvider;
 use datafusion::error::DataFusionError;
@@ -70,6 +71,8 @@ impl CubeContext {
         } else if let Some(t) = any.downcast_ref::<InfoSchemaCollationsProvider>() {
             t.table_name().to_string()
         } else if let Some(t) = any.downcast_ref::<PerfSchemaVariablesProvider>() {
+            t.table_name().to_string()
+        } else if let Some(t) = any.downcast_ref::<InfoSchemaProcesslistProvider>() {
             t.table_name().to_string()
         } else {
             return Err(CubeError::internal(format!(
