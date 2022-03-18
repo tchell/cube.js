@@ -88,6 +88,31 @@ cube(`Events`, {
 });
 ```
 
+## Import from parent directories
+
+Cube.js flattens nested directories. Import from parent directories as they are located on the same level.
+
+```shell
+.
+├── README.md
+├── cube.js
+├── package.json
+└── schema
+    ├── utils.js
+    └── Sales
+        └── Orders.js
+```
+
+```javascript
+// in schema/Sales/Orders.js
+import { capitalize } from './utils';
+```
+
+```javascript
+// in schema/utils.js
+export const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+```
+
 [mdn-js-es6-export]:
   https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export
 [mdn-js-es6-import]:
