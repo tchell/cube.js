@@ -14,9 +14,9 @@
   "main": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
   "scripts": {
-    "test": "npm run unit",
+    "test": "yarn run unit",
     "unit": "jest --coverage dist/test",
-    "build": "rm -rf dist && npm run tsc",
+    "build": "rm -rf dist && yarn run tsc",
     "tsc": "tsc",
     "watch": "tsc -w",
     "lint": "eslint src/* test/* --ext .ts,.js",
