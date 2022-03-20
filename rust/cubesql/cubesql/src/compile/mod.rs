@@ -2181,7 +2181,6 @@ mod tests {
     use async_trait::async_trait;
     use cubeclient::models::{
         V1CubeMeta, V1CubeMetaDimension, V1CubeMetaMeasure, V1CubeMetaSegment, V1LoadResponse,
-        V1LoadResult,
     };
 
     use crate::{
@@ -2429,7 +2428,7 @@ mod tests {
     #[test]
     fn test_select_compound_identifiers() {
         let query_plan = convert_select_to_query_plan(
-            "SELECT MEASURE(`KibanaSampleDataEcommerce`.`maxPrice`) AS maxPrice, `KibanaSampleDataEcommerce`.`minPrice` AS minPrice FROM KibanaSampleDataEcommerce".to_string(),
+            "SELECT MEASURE(`KibanaSampleDataEcommerce`.`maxPrice`) AS maxPrice, MEASURE(`KibanaSampleDataEcommerce`.`minPrice`) AS minPrice FROM KibanaSampleDataEcommerce".to_string(),
         );
 
         let logical_plan = query_plan.as_logical_plan();
@@ -2449,27 +2448,6 @@ mod tests {
                 filters: None
             }
         );
-
-        assert_eq!(
-            logical_plan.find_cube_scan().schema,
-            Arc::new(
-                DFSchema::new(vec![
-                    DFField::new(
-                        None,
-                        "KibanaSampleDataEcommerce.maxPrice",
-                        DataType::Float64,
-                        false
-                    ),
-                    DFField::new(
-                        None,
-                        "KibanaSampleDataEcommerce.minPrice",
-                        DataType::Float64,
-                        false
-                    ),
-                ])
-                .unwrap()
-            ),
-        )
     }
 
     #[test]
