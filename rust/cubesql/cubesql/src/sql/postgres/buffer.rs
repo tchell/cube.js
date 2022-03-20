@@ -17,6 +17,7 @@ pub async fn read_message<Reader: AsyncReadExt + Unpin + Send>(
         b'P' => FrontendMessage::Parse(protocol::Parse::read_from(reader).await?),
         b'B' => FrontendMessage::Bind(protocol::Bind::read_from(reader).await?),
         b'D' => FrontendMessage::Describe(protocol::Describe::read_from(reader).await?),
+        b'E' => FrontendMessage::Execute(protocol::Execute::read_from(reader).await?),
         b'p' => {
             FrontendMessage::PasswordMessage(protocol::PasswordMessage::read_from(reader).await?)
         }

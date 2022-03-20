@@ -158,6 +158,38 @@ impl Serialize for ParameterStatus {
     }
 }
 
+pub struct BindComplete {}
+
+impl BindComplete {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Serialize for BindComplete {
+    const CODE: u8 = b'1';
+
+    fn serialize(&self) -> Option<Vec<u8>> {
+        None
+    }
+}
+
+pub struct ParseComplete {}
+
+impl ParseComplete {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Serialize for ParseComplete {
+    const CODE: u8 = b'1';
+
+    fn serialize(&self) -> Option<Vec<u8>> {
+        None
+    }
+}
+
 pub struct CommandComplete {
     tag: CommandCompleteTag,
     rows: u32,
@@ -319,6 +351,27 @@ impl Deserialize for Parse {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Execute {
+    // The name of the portal to execute (an empty string selects the unnamed portal).
+    pub portal: String,
+    // Maximum number of rows to return, if portal contains a query that returns rows (ignored otherwise). Zero denotes “no limit”.
+    pub max_rows: i32,
+}
+
+#[async_trait]
+impl Deserialize for Execute {
+    async fn deserialize(mut buffer: Cursor<Vec<u8>>) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let portal = buffer::read_string(&mut buffer).await?;
+        let max_rows = buffer.read_i32().await?;
+
+        Ok(Self { portal, max_rows })
+    }
+}
+
 /// This command is used for prepared statement creation on the server side
 #[derive(Debug, PartialEq)]
 pub struct Bind {
@@ -464,6 +517,7 @@ pub enum FrontendMessage {
     Parse(Parse),
     Bind(Bind),
     Describe(Describe),
+    Execute(Execute),
     /// Close connection
     Terminate,
     /// Finish
@@ -477,6 +531,8 @@ pub enum ErrorCode {
     // 28 - Invalid Authorization Specification
     InvalidAuthorizationSpecification,
     InvalidPassword,
+    // 26
+    InvalidSqlStatement,
     // XX - Internal Error
     InternalError,
 }
@@ -485,10 +541,9 @@ impl Display for ErrorCode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = match self {
             Self::FeatureNotSupported => "0A000",
-
             Self::InvalidAuthorizationSpecification => "28000",
             Self::InvalidPassword => "28P01",
-
+            Self::InvalidSqlStatement => "26000",
             Self::InternalError => "XX000",
         };
         write!(f, "{}", string)
@@ -698,6 +753,30 @@ mod tests {
                         typ: DescribeType::Statement,
                         name: "s0".to_string(),
                     },
+                )
+            }
+            _ => panic!("Wrong message, must be Describe"),
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_frontend_message_parse_execute() -> Result<(), CubeError> {
+        let buffer = parse_hex_dump(
+            r#"
+            45 00 00 00 09 00 00 00 00 00                     E.........      
+            "#
+            .to_string(),
+        );
+        let mut cursor = Cursor::new(buffer);
+
+        let message = read_message(&mut cursor).await?;
+        match message {
+            FrontendMessage::Execute(exec) => {
+                assert_eq!(
+                    exec,
+                    Execute { portal: "".to_string(), max_rows: 0 },
                 )
             }
             _ => panic!("Wrong message, must be Describe"),
