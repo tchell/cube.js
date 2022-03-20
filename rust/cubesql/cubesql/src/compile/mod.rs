@@ -46,7 +46,7 @@ use self::parser::parse_sql_to_statement;
 use crate::compile::engine::udf::{
     create_date_add_udf, create_date_sub_udf, create_date_udf, create_dayofmonth_udf,
     create_dayofweek_udf, create_dayofyear_udf, create_hour_udf, create_makedate_udf,
-    create_minute_udf, create_quarter_udf, create_second_udf, create_year_udf,
+    create_measure_udaf, create_minute_udf, create_quarter_udf, create_second_udf, create_year_udf,
 };
 use crate::compile::rewrite::LogicalPlanToLanguageConverter;
 
@@ -1994,6 +1994,8 @@ WHERE `TABLE_SCHEMA` = '{}'",
         ctx.register_udf(create_date_sub_udf());
         ctx.register_udf(create_date_add_udf());
 
+        ctx.register_udaf(create_measure_udaf());
+
         ctx
     }
 
@@ -2422,45 +2424,6 @@ mod tests {
                 filters: None
             }
         );
-
-        assert_eq!(
-            logical_plan.find_projection_schema(),
-            Arc::new(
-                DFSchema::new(vec![
-                    DFField::new(None, "maxPrice", DataType::Float64, false),
-                    DFField::new(None, "minPrice", DataType::Float64, false),
-                    DFField::new(None, "avgPrice", DataType::Float64, false),
-                ])
-                .unwrap()
-            ),
-        );
-
-        assert_eq!(
-            logical_plan.find_cube_scan().schema,
-            Arc::new(
-                DFSchema::new(vec![
-                    DFField::new(
-                        None,
-                        "KibanaSampleDataEcommerce.maxPrice",
-                        DataType::Float64,
-                        false
-                    ),
-                    DFField::new(
-                        None,
-                        "KibanaSampleDataEcommerce.minPrice",
-                        DataType::Float64,
-                        false
-                    ),
-                    DFField::new(
-                        None,
-                        "KibanaSampleDataEcommerce.avgPrice",
-                        DataType::Float64,
-                        false
-                    ),
-                ])
-                .unwrap()
-            ),
-        )
     }
 
     #[test]
